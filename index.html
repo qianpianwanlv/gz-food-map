@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta property="og:title" content="千篇万律·美食地图（广州站）">
+<meta property="og:description" content="法律人专属广州美食地图，商务宴请·休闲聚餐，靠谱荐店精准排雷">
+<meta property="og:image" content="https://img.alicdn.com/imgextra/i3/O1CN01Wr5KxP1dJdNQUPhJx_!!6000000003715-2-tps-128-128.png">
+<title>千篇万律·美食地图（广州站）</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; background:#f5f5f5; height:100vh; display:flex; flex-direction:column; }
+
+/* Header */
+.header { background:linear-gradient(135deg,#c0392b,#e74c3c); color:#fff; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; z-index:1000; box-shadow:0 2px 8px rgba(0,0,0,0.2); flex-shrink:0; }
+.header h1 { font-size:18px; font-weight:600; white-space:nowrap; }
+.header .sub { font-size:11px; opacity:0.85; margin-top:2px; }
+.header .count { font-size:12px; background:rgba(255,255,255,0.2); padding:4px 10px; border-radius:12px; white-space:nowrap; }
+
+/* Toolbar */
+.toolbar { background:#fff; padding:8px 12px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; border-bottom:1px solid #eee; flex-shrink:0; z-index:999; }
+.toolbar .tab { padding:6px 14px; border-radius:16px; border:1.5px solid #ddd; background:#fff; font-size:13px; cursor:pointer; transition:all 0.2s; white-space:nowrap; color:#666; }
+.toolbar .tab:hover { border-color:#e74c3c; color:#e74c3c; }
+.toolbar .tab.active { background:#e74c3c; color:#fff; border-color:#e74c3c; }
+.toolbar .tab.minefield.active { background:#e67e22; border-color:#e67e22; }
+.toolbar select { padding:6px 10px; border-radius:16px; border:1.5px solid #ddd; font-size:13px; background:#fff; color:#333; cursor:pointer; }
+.toolbar select:focus { outline:none; border-color:#e74c3c; }
+.toolbar .search-box { flex:1; min-width:140px; position:relative; }
+.toolbar .search-box input { width:100%; padding:6px 12px 6px 32px; border-radius:16px; border:1.5px solid #ddd; font-size:13px; outline:none; }
+.toolbar .search-box input:focus { border-color:#e74c3c; }
+.toolbar .search-box .search-icon { position:absolute; left:10px; top:50%; transform:translateY(-50%); color:#999; font-size:14px; }
+.toolbar .view-toggle { display:flex; border-radius:16px; overflow:hidden; border:1.5px solid #ddd; }
+.toolbar .view-toggle button { padding:6px 12px; border:none; background:#fff; font-size:13px; cursor:pointer; color:#666; }
+.toolbar .view-toggle button.active { background:#e74c3c; color:#fff; }
+
+/* Map */
+#map { flex:1; z-index:1; }
+
+/* List View */
+#list-view { flex:1; overflow-y:auto; background:#f5f5f5; padding:8px; display:none; }
+#list-view .list-card { background:#fff; border-radius:10px; padding:14px; margin-bottom:8px; box-shadow:0 1px 4px rgba(0,0,0,0.08); cursor:pointer; transition:transform 0.15s; }
+#list-view .list-card:active { transform:scale(0.98); }
+.list-card .lc-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; }
+.list-card .lc-name { font-size:16px; font-weight:600; color:#333; }
+.list-card .lc-price { font-size:16px; font-weight:700; color:#e74c3c; white-space:nowrap; }
+.list-card .lc-meta { font-size:12px; color:#999; margin-bottom:4px; }
+.list-card .lc-meta span { margin-right:10px; }
+.list-card .lc-addr { font-size:12px; color:#666; }
+.list-card .lc-dishes { font-size:12px; color:#888; margin-top:4px; line-height:1.4; }
+.list-card .lc-tags { margin-top:6px; }
+.list-card .lc-tags span { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; margin-right:4px; }
+.tag-scene { background:#fde8e8; color:#c0392b; }
+.tag-cuisine { background:#e8f4fd; color:#2980b9; }
+.tag-mine { background:#fef3e2; color:#e67e22; }
+
+/* Popup overrides */
+.leaflet-popup-content { margin:10px 14px; font-size:14px; line-height:1.5; }
+.leaflet-popup-content .pp-name { font-size:16px; font-weight:700; color:#333; margin-bottom:4px; }
+.leaflet-popup-content .pp-meta { font-size:12px; color:#999; margin-bottom:4px; }
+.leaflet-popup-content .pp-meta .pp-price { color:#e74c3c; font-weight:600; font-size:13px; }
+.leaflet-popup-content .pp-addr { font-size:12px; color:#666; margin-bottom:4px; }
+.leaflet-popup-content .pp-dishes { font-size:12px; color:#888; margin-bottom:4px; }
+.leaflet-popup-content .pp-phone { font-size:12px; color:#2980b9; }
+.leaflet-popup-content .pp-mine { color:#e67e22; font-size:12px; font-weight:600; }
+.leaflet-popup-content .pp-recommender { font-size:11px; color:#aaa; margin-top:4px; }
+
+/* Custom marker styles */
+.marker-biz { background:#c0392b; border:2px solid #fff; border-radius:50%; box-shadow:0 2px 6px rgba(0,0,0,0.3); }
+.marker-casual { background:#27ae60; border:2px solid #fff; border-radius:50%; box-shadow:0 2px 6px rgba(0,0,0,0.3); }
+.marker-mine { background:#e67e22; border:2px solid #fff; border-radius:50%; box-shadow:0 2px 6px rgba(0,0,0,0.3); }
+
+/* Legend */
+.legend { position:absolute; bottom:20px; right:10px; background:rgba(255,255,255,0.95); padding:8px 12px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.15); z-index:999; font-size:12px; }
+.legend-item { display:flex; align-items:center; margin:3px 0; }
+.legend-dot { width:10px; height:10px; border-radius:50%; margin-right:6px; border:2px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,0.2); }
+.legend-dot.biz { background:#c0392b; }
+.legend-dot.casual { background:#27ae60; }
+.legend-dot.mine { background:#e67e22; }
+
+/* No results */
+.no-results { text-align:center; padding:40px; color:#999; display:none; }
+.no-results .icon { font-size:48px; margin-bottom:10px; }
+
+@media (max-width: 480px) {
+  .header h1 { font-size:15px; }
+  .toolbar { padding:6px 8px; gap:4px; }
+  .toolbar .tab { padding:5px 10px; font-size:12px; }
+  .toolbar select { font-size:12px; padding:5px 8px; }
+  .toolbar .search-box input { font-size:12px; }
+  .legend { bottom:10px; right:5px; font-size:10px; padding:6px 8px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>🍽️ 千篇万律·美食地图</h1>
+    <div class="sub">广州站 · 法律人专属</div>
+  </div>
+  <div class="count" id="count">共 0 家</div>
+</div>
+
+<div class="toolbar" id="toolbar">
+  <button class="tab active" data-scene="all">全部</button>
+  <button class="tab" data-scene="商务宴请">💼 商务宴请</button>
+  <button class="tab" data-scene="同行休闲聚餐">🥂 休闲聚餐</button>
+  <button class="tab minefield" data-scene="minefield">⚠️ 排雷</button>
+  <select id="cuisine-filter">
+    <option value="all">🍳 全部菜系</option>
+  </select>
+  <select id="price-filter">
+    <option value="all">💰 全部人均</option>
+    <option value="0-80">¥80以下</option>
+    <option value="80-150">¥80-150</option>
+    <option value="150-300">¥150-300</option>
+    <option value="300-99999">¥300以上</option>
+  </select>
+  <div class="search-box">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="search-input" placeholder="搜店名或地址...">
+  </div>
+  <div class="view-toggle">
+    <button class="active" data-view="map">🗺️ 地图</button>
+    <button data-view="list">📋 列表</button>
+  </div>
+</div>
+
+<div id="map"></div>
+<div id="list-view"></div>
+<div class="no-results" id="no-results">
+  <div class="icon">🔍</div>
+  <div>没有匹配的餐厅</div>
+  <div style="font-size:12px;color:#bbb;">换个筛选条件试试</div>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><span class="legend-dot biz"></span> 商务宴请</div>
+  <div class="legend-item"><span class="legend-dot casual"></span> 休闲聚餐</div>
+  <div class="legend-item"><span class="legend-dot mine"></span> 已排雷</div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="restaurants.js"></script>
+<script>
+(function(){
+  // ===== State =====
+  var map, markersLayer, allRestaurants = RESTAURANTS;
+  var activeScene = 'all';
+  var activeCuisine = 'all';
+  var activePrice = 'all';
+  var activeSearch = '';
+  var currentView = 'map';
+
+  // ===== Init Map =====
+  function initMap() {
+    map = L.map('map', { attributionControl: false }).setView([23.118, 113.324], 14);
+
+    // 高德瓦片（免费，无需API Key）
+    L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', {
+      subdomains: '1234',
+      maxZoom: 18,
+      minZoom: 10
+    }).addTo(map);
+
+    markersLayer = L.layerGroup().addTo(map);
+  }
+
+  // ===== Create Marker Icon =====
+  function createIcon(scene, isMine) {
+    var color = isMine ? '#e67e22' : (scene === '商务宴请' ? '#c0392b' : '#27ae60');
+    var emoji = isMine ? '⚠' : (scene === '商务宴请' ? '💼' : '🥂');
+    return L.divIcon({
+      className: '',
+      html: '<div style="background:'+color+';width:28px;height:28px;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:14px;">'+emoji+'</div>',
+      iconSize: [28, 28],
+      iconAnchor: [14, 14],
+      popupAnchor: [0, -16]
+    });
+  }
+
+  // ===== Render Markers =====
+  function renderMarkers(restaurants) {
+    markersLayer.clearLayers();
+    var bounds = [];
+
+    restaurants.forEach(function(r, i) {
+      if (!r.lat || !r.lng) return;
+      var icon = createIcon(r.scene, r.minefield);
+      var popupHtml = '<div class="pp-name">' + (r.minefield ? '⚠️ ' : '') + r.name + '</div>';
+      popupHtml += '<div class="pp-meta">';
+      if (r.cuisine) popupHtml += r.cuisine + ' · ';
+      popupHtml += '<span class="pp-price">¥' + r.avgPrice + '/人</span>';
+      if (r.rating) popupHtml += ' · ⭐' + r.rating;
+      popupHtml += '</div>';
+      if (r.dishes) popupHtml += '<div class="pp-dishes">🥘 ' + r.dishes + '</div>';
+      popupHtml += '<div class="pp-addr">📍 ' + r.address + '</div>';
+      if (r.phone) popupHtml += '<div class="pp-phone">📞 <a href="tel:' + r.phone.replace(/[^0-9]/g,'') + '" style="color:#2980b9;">' + r.phone + '</a></div>';
+      if (r.minefield && r.minefieldNote) popupHtml += '<div class="pp-mine">🚫 排雷：' + r.minefieldNote + '</div>';
+      if (r.comment) popupHtml += '<div style="font-size:12px;color:#666;margin-top:2px;">💬 ' + r.comment + '</div>';
+      if (r.recommender) popupHtml += '<div class="pp-recommender">推荐人：' + r.recommender + '</div>';
+
+      var marker = L.marker([r.lat, r.lng], { icon: icon }).addTo(markersLayer);
+      marker.bindPopup(popupHtml, { maxWidth: 280 });
+      bounds.push([r.lat, r.lng]);
+    });
+
+    if (bounds.length > 0) {
+      map.fitBounds(bounds, { padding: [30, 30], maxZoom: 16 });
+    }
+  }
+
+  // ===== Render List =====
+  function renderList(restaurants) {
+    var container = document.getElementById('list-view');
+    if (restaurants.length === 0) {
+      container.innerHTML = '';
+      return;
+    }
+    var html = '';
+    restaurants.forEach(function(r) {
+      var tags = '';
+      if (r.scene) tags += '<span class="tag-scene">' + r.scene + '</span>';
+      if (r.cuisine) tags += '<span class="tag-cuisine">' + r.cuisine + '</span>';
+      if (r.minefield) tags += '<span class="tag-mine">⚠️ 已排雷</span>';
+
+      html += '<div class="list-card" data-idx="' + r._idx + '">';
+      html += '<div class="lc-header"><span class="lc-name">' + r.name + '</span><span class="lc-price">¥' + r.avgPrice + '/人</span></div>';
+      html += '<div class="lc-meta">';
+      if (r.cuisine) html += '<span>🍳 ' + r.cuisine + '</span>';
+      if (r.rating) html += '<span>⭐ ' + r.rating + '</span>';
+      html += '</div>';
+      html += '<div class="lc-addr">📍 ' + r.address + '</div>';
+      if (r.dishes) html += '<div class="lc-dishes">🥘 ' + r.dishes.substring(0, 60) + (r.dishes.length > 60 ? '...' : '') + '</div>';
+      if (tags) html += '<div class="lc-tags">' + tags + '</div>';
+      html += '</div>';
+    });
+    container.innerHTML = html;
+
+    // Click to fly to marker
+    container.querySelectorAll('.list-card').forEach(function(card) {
+      card.addEventListener('click', function() {
+        var idx = parseInt(this.dataset.idx);
+        var r = allRestaurants[idx];
+        if (r && r.lat && r.lng) {
+          document.getElementById('map').style.display = '';
+          document.getElementById('list-view').style.display = 'none';
+          document.querySelectorAll('.view-toggle button').forEach(function(b){ b.classList.remove('active'); });
+          document.querySelector('[data-view="map"]').classList.add('active');
+          currentView = 'map';
+          map.setView([r.lat, r.lng], 16);
+        }
+      });
+    });
+  }
+
+  // ===== Filter Logic =====
+  function filter() {
+    var filtered = allRestaurants.filter(function(r) {
+      // Scene filter
+      if (activeScene === 'minefield') {
+        if (!r.minefield) return false;
+      } else if (activeScene !== 'all') {
+        if (r.scene !== activeScene) return false;
+      }
+      // Cuisine filter
+      if (activeCuisine !== 'all' && r.cuisine !== activeCuisine) return false;
+      // Price filter
+      if (activePrice !== 'all') {
+        var parts = activePrice.split('-');
+        var lo = parseFloat(parts[0]), hi = parseFloat(parts[1]);
+        if (r.avgPrice < lo || r.avgPrice > hi) return false;
+      }
+      // Search filter
+      if (activeSearch) {
+        var q = activeSearch.toLowerCase();
+        if (r.name.toLowerCase().indexOf(q) === -1 && r.address.toLowerCase().indexOf(q) === -1) return false;
+      }
+      return true;
+    });
+
+    // Tag each with its original index for list→map navigation
+    filtered.forEach(function(r) {
+      r._idx = allRestaurants.indexOf(r);
+    });
+
+    document.getElementById('count').textContent = '共 ' + filtered.length + ' 家';
+
+    if (filtered.length === 0) {
+      document.getElementById('no-results').style.display = 'block';
+      markersLayer.clearLayers();
+      document.getElementById('list-view').innerHTML = '';
+    } else {
+      document.getElementById('no-results').style.display = 'none';
+    }
+
+    if (currentView === 'map') {
+      renderMarkers(filtered);
+    } else {
+      renderList(filtered);
+    }
+
+    // Update cuisine dropdown options based on all restaurants
+    updateCuisineOptions();
+  }
+
+  // ===== Update Cuisine Dropdown =====
+  function updateCuisineOptions() {
+    var cuisines = {};
+    allRestaurants.forEach(function(r) {
+      if (r.cuisine) cuisines[r.cuisine] = (cuisines[r.cuisine] || 0) + 1;
+    });
+    var sel = document.getElementById('cuisine-filter');
+    var current = sel.value;
+    sel.innerHTML = '<option value="all">🍳 全部菜系</option>';
+    Object.keys(cuisines).sort().forEach(function(c) {
+      sel.innerHTML += '<option value="' + c + '">' + c + ' (' + cuisines[c] + ')</option>';
+    });
+    sel.value = current;
+    if (!sel.querySelector('option[value="' + current + '"]')) sel.value = 'all';
+  }
+
+  // ===== Event Handlers =====
+  // Scene tabs
+  document.querySelectorAll('.tab').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+      this.classList.add('active');
+      activeScene = this.dataset.scene;
+      filter();
+    });
+  });
+
+  // Cuisine filter
+  document.getElementById('cuisine-filter').addEventListener('change', function() {
+    activeCuisine = this.value;
+    filter();
+  });
+
+  // Price filter
+  document.getElementById('price-filter').addEventListener('change', function() {
+    activePrice = this.value;
+    filter();
+  });
+
+  // Search
+  document.getElementById('search-input').addEventListener('input', function() {
+    activeSearch = this.value.trim();
+    filter();
+  });
+
+  // View toggle
+  document.querySelectorAll('.view-toggle button').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.view-toggle button').forEach(function(b){ b.classList.remove('active'); });
+      this.classList.add('active');
+      currentView = this.dataset.view;
+      if (currentView === 'map') {
+        document.getElementById('map').style.display = '';
+        document.getElementById('list-view').style.display = 'none';
+      } else {
+        document.getElementById('map').style.display = 'none';
+        document.getElementById('list-view').style.display = '';
+      }
+      filter();
+    });
+  });
+
+  // ===== Bootstrap =====
+  initMap();
+  filter();
+})();
+</script>
+</body>
+</html>
