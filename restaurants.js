@@ -162,5 +162,21 @@ var RESTAURANTS = [
     "minefieldNote": "",
     "lat": 23.120574,
     "lng": 113.328440
+  },
+  {
+    "name": "肆点·东南亚小馆(四海城店)",
+    "address": "番禺区汉溪大道东390号四海城商业广场东区负2层19-22号",
+    "scene": "同行休闲聚餐",
+    "cuisine": "东南亚菜",
+    "avgPrice": 85,
+    "rating": 4.6,
+    "dishes": "泰式青柠檬海鲈鱼",
+    "phone": "",
+    "recommender": "邵律",
+    "comment": "",
+    "minefield": false,
+    "minefieldNote": "",
+    "lat": 23.006094,
+    "lng": 113.352169
   }
 ];
