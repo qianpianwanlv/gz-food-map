@@ -16,8 +16,8 @@ var RESTAURANTS = [
     "comment": "",
     "minefield": false,
     "minefieldNote": "",
-    "lat": 23.118335,
-    "lng": 113.326076
+    "lat": 23.117789,
+    "lng": 113.326132
   },
   {
     "name": "和苑·精致粤菜(珠江新城店)",

@@ -86,29 +86,43 @@ def fetch_records():
 
 
 def geocode(address, name=""):
-    """用高德API将地址转换为经纬度。自动简化过细地址"""
+    """用高德API将地址转换为经纬度。优先POI搜索，避免地址歧义"""
     if not GAODE_KEY:
         return None, None
 
     import urllib.request, urllib.parse
 
-    candidates = [address]
+    # 方法一：用餐厅名做POI搜索（最准，不会串到同名分店）
+    if name:
+        params = urllib.parse.urlencode({
+            "key": GAODE_KEY,
+            "keywords": name,
+            "city": "广州",
+            "output": "JSON",
+            "offset": 3
+        })
+        url = f"https://restapi.amap.com/v3/place/text?{params}"
+        try:
+            req = urllib.request.urlopen(url, timeout=10)
+            data = json.loads(req.read().decode())
+            if data["status"] == "1" and data["pois"]:
+                loc = data["pois"][0]["location"]
+                lng, lat = loc.split(",")
+                print(f"    ↳ POI搜索命中: {data['pois'][0]['name'][:30]}")
+                return float(lat), float(lng)
+        except Exception:
+            pass
 
-    # 自动生成简化版地址：去掉括号内的楼层铺号、停车指引等
+    # 方法二：地址反查，自动简化过细地址
+    candidates = [address]
     simplified = re.sub(r'[（(][^)）]*[)）]', '', address).strip()
     if simplified != address:
         candidates.append(simplified)
-
-    # 去掉门牌号级别的细节（如"负一层B133铺"、"4楼407号"）
     stripped = re.sub(r'[负地].{0,3}[层楼].{0,6}(铺|号|室)', '', simplified).strip()
     if stripped != simplified:
         candidates.append(stripped)
 
-    # 用餐厅名作为POI搜索（最后手段）
-    if name:
-        candidates.append(name)
-
-    for i, addr in enumerate(candidates):
+    for addr in candidates:
         params = urllib.parse.urlencode({
             "key": GAODE_KEY,
             "address": addr,
@@ -122,10 +136,8 @@ def geocode(address, name=""):
             if data["status"] == "1" and data["geocodes"]:
                 loc = data["geocodes"][0]["location"]
                 lng, lat = loc.split(",")
-                if i > 0:
-                    print(f"    ↳ 简化地址后查到: {addr[:40]}")
                 return float(lat), float(lng)
-        except Exception as e:
+        except Exception:
             continue
 
     print(f"  ⚠️ 地理编码失败: {address[:30]}...")
