@@ -5,7 +5,7 @@
 var RESTAURANTS = [
   {
     "name": "好客家·客家艺术厨房概念店(K11店)",
-    "address": "珠江东路6号K11购物艺术中心负一层B133铺",
+    "address": "天河区珠江东路6号K11购物艺术中心负一层B133铺",
     "scene": "商务宴请",
     "cuisine": "客家菜",
     "avgPrice": 79,
@@ -16,8 +16,8 @@ var RESTAURANTS = [
     "comment": "",
     "minefield": false,
     "minefieldNote": "",
-    "lat": 23.113703,
-    "lng": 113.333289
+    "lat": 23.118335,
+    "lng": 113.326076
   },
   {
     "name": "和苑·精致粤菜(珠江新城店)",
