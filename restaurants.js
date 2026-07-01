@@ -16,8 +16,8 @@ var RESTAURANTS = [
     "comment": "",
     "minefield": false,
     "minefieldNote": "",
-    "lat": 23.1196,
-    "lng": 113.3265
+    "lat": 23.113703,
+    "lng": 113.333289
   },
   {
     "name": "和苑·精致粤菜(珠江新城店)",
@@ -32,8 +32,8 @@ var RESTAURANTS = [
     "comment": "",
     "minefield": false,
     "minefieldNote": "",
-    "lat": 23.1190,
-    "lng": 113.3250
+    "lat": 23.117813,
+    "lng": 113.327429
   },
   {
     "name": "南海渔村（珠江新城店）",
@@ -48,8 +48,8 @@ var RESTAURANTS = [
     "comment": "",
     "minefield": false,
     "minefieldNote": "",
-    "lat": 23.1185,
-    "lng": 113.3258
+    "lat": 23.120589,
+    "lng": 113.32724
   },
   {
     "name": "陶陶居·雅园(凯华国际店)",
@@ -64,8 +64,8 @@ var RESTAURANTS = [
     "comment": "",
     "minefield": false,
     "minefieldNote": "",
-    "lat": 23.1188,
-    "lng": 113.3243
+    "lat": 23.117236,
+    "lng": 113.327314
   },
   {
     "name": "木棉·醉心粤味(高德置地店)",
@@ -80,8 +80,8 @@ var RESTAURANTS = [
     "comment": "",
     "minefield": false,
     "minefieldNote": "",
-    "lat": 23.1182,
-    "lng": 113.3263
+    "lat": 23.119298,
+    "lng": 113.326737
   },
   {
     "name": "头啖汤·30年老字号广府粤菜(冼村路店)",
@@ -96,8 +96,8 @@ var RESTAURANTS = [
     "comment": "",
     "minefield": false,
     "minefieldNote": "",
-    "lat": 23.1170,
-    "lng": 113.3255
+    "lat": 23.116666,
+    "lng": 113.328509
   },
   {
     "name": "炳胜品味（珠江新城店）",
@@ -112,8 +112,8 @@ var RESTAURANTS = [
     "comment": "",
     "minefield": false,
     "minefieldNote": "",
-    "lat": 23.1165,
-    "lng": 113.3245
+    "lat": 23.114951,
+    "lng": 113.328645
   },
   {
     "name": "海门鱼仔·潮汕味（冼村店）",
@@ -128,8 +128,8 @@ var RESTAURANTS = [
     "comment": "",
     "minefield": false,
     "minefieldNote": "",
-    "lat": 23.1175,
-    "lng": 113.3270
+    "lat": 23.120363,
+    "lng": 113.328772
   },
   {
     "name": "丘大·鹅仔江景酒家",
@@ -144,8 +144,8 @@ var RESTAURANTS = [
     "comment": "",
     "minefield": false,
     "minefieldNote": "",
-    "lat": 23.1150,
-    "lng": 113.2710
+    "lat": 23.114944,
+    "lng": 113.277909
   },
   {
     "name": "大鸽饭(兴盛路店)",
@@ -160,7 +160,7 @@ var RESTAURANTS = [
     "comment": "",
     "minefield": false,
     "minefieldNote": "",
-    "lat": 23.1176,
-    "lng": 113.3270
+    "lat": 23.120363,
+    "lng": 113.328772
   }
 ];
