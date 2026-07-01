@@ -85,28 +85,50 @@ def fetch_records():
     return records
 
 
-def geocode(address):
-    """用高德API将地址转换为经纬度"""
+def geocode(address, name=""):
+    """用高德API将地址转换为经纬度。自动简化过细地址"""
     if not GAODE_KEY:
         return None, None
 
     import urllib.request, urllib.parse
-    params = urllib.parse.urlencode({
-        "key": GAODE_KEY,
-        "address": address,
-        "city": "广州",
-        "output": "JSON"
-    })
-    url = f"https://restapi.amap.com/v3/geocode/geo?{params}"
-    try:
-        req = urllib.request.urlopen(url, timeout=10)
-        data = json.loads(req.read().decode())
-        if data["status"] == "1" and data["geocodes"]:
-            loc = data["geocodes"][0]["location"]
-            lng, lat = loc.split(",")
-            return float(lat), float(lng)
-    except Exception as e:
-        print(f"  ⚠️ 地理编码失败: {address[:20]}... {e}")
+
+    candidates = [address]
+
+    # 自动生成简化版地址：去掉括号内的楼层铺号、停车指引等
+    simplified = re.sub(r'[（(][^)）]*[)）]', '', address).strip()
+    if simplified != address:
+        candidates.append(simplified)
+
+    # 去掉门牌号级别的细节（如"负一层B133铺"、"4楼407号"）
+    stripped = re.sub(r'[负地].{0,3}[层楼].{0,6}(铺|号|室)', '', simplified).strip()
+    if stripped != simplified:
+        candidates.append(stripped)
+
+    # 用餐厅名作为POI搜索（最后手段）
+    if name:
+        candidates.append(name)
+
+    for i, addr in enumerate(candidates):
+        params = urllib.parse.urlencode({
+            "key": GAODE_KEY,
+            "address": addr,
+            "city": "广州",
+            "output": "JSON"
+        })
+        url = f"https://restapi.amap.com/v3/geocode/geo?{params}"
+        try:
+            req = urllib.request.urlopen(url, timeout=10)
+            data = json.loads(req.read().decode())
+            if data["status"] == "1" and data["geocodes"]:
+                loc = data["geocodes"][0]["location"]
+                lng, lat = loc.split(",")
+                if i > 0:
+                    print(f"    ↳ 简化地址后查到: {addr[:40]}")
+                return float(lat), float(lng)
+        except Exception as e:
+            continue
+
+    print(f"  ⚠️ 地理编码失败: {address[:30]}...")
     return None, None
 
 
@@ -178,7 +200,7 @@ def transform_records(records):
         # Geocode if no coordinates
         if (r["lat"] is None or r["lng"] is None) and r["address"] and GAODE_KEY:
             print(f"  🗺️ 正在查询坐标: {r['name'][:30]}...")
-            lat, lng = geocode(r["address"])
+            lat, lng = geocode(r["address"], r["name"])
             if lat and lng:
                 r["lat"] = lat
                 r["lng"] = lng
