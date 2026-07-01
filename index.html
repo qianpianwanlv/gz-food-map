@@ -246,6 +246,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC"
         if (r && r.lat && r.lng) {
           document.getElementById('map').style.display = '';
           document.getElementById('list-view').style.display = 'none';
+          map.invalidateSize();
           document.querySelectorAll('.view-toggle button').forEach(function(b){ b.classList.remove('active'); });
           document.querySelector('[data-view="map"]').classList.add('active');
           currentView = 'map';
@@ -361,7 +362,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC"
         document.getElementById('list-view').style.display = 'none';
       } else {
         document.getElementById('map').style.display = 'none';
-        document.getElementById('list-view').style.display = '';
+        document.getElementById('list-view').style.display = 'block';
       }
       filter();
     });
